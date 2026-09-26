@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './api';
 import Board from './components/Board';
+import ScheduleView from './components/ScheduleView';
 import NewTaskForm from './components/NewTaskForm';
 import Sidebar from './components/Sidebar';
 import {
@@ -11,6 +12,8 @@ import {
   IconX,
   IconAlert,
   IconPriorityBars,
+  IconGrid,
+  IconClock,
 } from './components/Icons';
 
 const POLLING_INTERVAL_MS = 3500;
@@ -28,6 +31,7 @@ export default function App() {
   const [filterAssignee, setFilterAssignee] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('board'); // 'board' | 'schedule'
 
   // Sidebar collapsed state with localStorage persistence
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -176,6 +180,8 @@ export default function App() {
         onSelectFilterAssignee={setFilterAssignee}
         filterPriority={filterPriority}
         onSelectFilterPriority={setFilterPriority}
+        viewMode={viewMode}
+        onSelectViewMode={setViewMode}
         onOpenNewTaskModal={handleOpenNewTaskModal}
         lastSynced={lastSynced}
         syncError={syncError}
@@ -199,8 +205,10 @@ export default function App() {
             <div className="breadcrumb-nav">
               <span className="breadcrumb-root">Sprint</span>
               <span className="breadcrumb-separator">/</span>
-              <span className="breadcrumb-current">{activeViewName}</span>
-              {filterPriority && (
+              <span className="breadcrumb-current">
+                {viewMode === 'schedule' ? 'Task Scheduler' : activeViewName}
+              </span>
+              {viewMode === 'board' && filterPriority && (
                 <>
                   <span className="breadcrumb-separator">/</span>
                   <span className="breadcrumb-tag">
@@ -237,6 +245,27 @@ export default function App() {
           </div>
 
           <div className="workspace-header-right">
+            <div className="view-mode-toggle">
+              <button
+                type="button"
+                className={`view-toggle-btn ${viewMode === 'board' ? 'view-toggle-active' : ''}`}
+                onClick={() => setViewMode('board')}
+                title="Kanban Board View"
+              >
+                <IconGrid size={13} />
+                <span>Board</span>
+              </button>
+              <button
+                type="button"
+                className={`view-toggle-btn ${viewMode === 'schedule' ? 'view-toggle-active' : ''}`}
+                onClick={() => setViewMode('schedule')}
+                title="Priority Task Scheduler"
+              >
+                <IconClock size={13} />
+                <span>Scheduler</span>
+              </button>
+            </div>
+
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -317,13 +346,22 @@ export default function App() {
           </section>
         )}
 
-        {/* Board Main Area */}
+        {/* Main Area: Board or Scheduler */}
         <main className="board-main">
           {loading && tasks.length === 0 ? (
             <div className="board-loading">
               <div className="spinner" />
-              <p className="loading-text">Loading shared board...</p>
+              <p className="loading-text">Loading workspace...</p>
             </div>
+          ) : viewMode === 'schedule' ? (
+            <ScheduleView
+              tasks={displayedTasks}
+              people={people}
+              currentUser={currentUser}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+              onOpenNewTaskModal={handleOpenNewTaskModal}
+            />
           ) : (
             <Board
               tasks={displayedTasks}

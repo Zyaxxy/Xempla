@@ -8,7 +8,15 @@ import {
   IconCheck,
   IconRefresh,
   IconPriorityBars,
+  IconCalendar,
+  IconClock,
 } from './Icons';
+import {
+  URGENCY_CONFIG,
+  formatDueDateInfo,
+  formatEffortHours,
+  EFFORT_PRESETS,
+} from '../utils/scheduler';
 
 const PRIORITY_LABELS = {
   low: 'Low',
@@ -30,6 +38,8 @@ export default function TaskCard({
   const [editAssignee, setEditAssignee] = useState(task.assignee || '');
   const [editStatus, setEditStatus] = useState(task.status);
   const [editPriority, setEditPriority] = useState(task.priority || 'medium');
+  const [editDueDate, setEditDueDate] = useState(task.due_date ? task.due_date.substring(0, 16) : '');
+  const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimated_hours || 1.0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,6 +69,8 @@ export default function TaskCard({
         assignee: editAssignee || null,
         status: editStatus,
         priority: editPriority,
+        due_date: editDueDate ? new Date(editDueDate).toISOString() : null,
+        estimated_hours: parseFloat(editEstimatedHours) || 1.0,
       });
       setIsEditing(false);
     } catch (err) {
@@ -96,6 +108,9 @@ export default function TaskCard({
   };
 
   const priorityKey = task.priority || 'medium';
+  const urgencyKey = task.urgency_level || 'none';
+  const urgencyInfo = URGENCY_CONFIG[urgencyKey] || URGENCY_CONFIG.none;
+  const dueInfo = formatDueDateInfo(task.due_date);
 
   if (isEditing) {
     return (
@@ -162,6 +177,45 @@ export default function TaskCard({
             </div>
           </div>
 
+          <div className="form-row">
+            <div className="form-group" style={{ flex: 1.2 }}>
+              <label className="form-label">Due Date & Time</label>
+              <input
+                type="datetime-local"
+                className="text-input"
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Estimated Effort (Hours)</label>
+              <div className="effort-input-row">
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.1"
+                  max="100"
+                  className="text-input text-input-effort"
+                  value={editEstimatedHours}
+                  onChange={(e) => setEditEstimatedHours(e.target.value)}
+                />
+                <div className="effort-presets">
+                  {EFFORT_PRESETS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      className={`preset-chip ${parseFloat(editEstimatedHours) === p.value ? 'preset-chip-active' : ''}`}
+                      onClick={() => setEditEstimatedHours(p.value)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {error && <div className="error-banner">{error}</div>}
 
           <div className="card-actions-row">
@@ -174,6 +228,8 @@ export default function TaskCard({
                 setEditAssignee(task.assignee || '');
                 setEditStatus(task.status);
                 setEditPriority(task.priority || 'medium');
+                setEditDueDate(task.due_date ? task.due_date.substring(0, 16) : '');
+                setEditEstimatedHours(task.estimated_hours || 1.0);
                 setIsEditing(false);
                 setError('');
               }}
@@ -195,11 +251,20 @@ export default function TaskCard({
       <div className="card-header">
         <div className="card-title-group">
           <h4 className="task-title" title={task.title}>{task.title}</h4>
-          <span className={`priority-badge priority-badge-${priorityKey}`}>
-            <IconPriorityBars priority={priorityKey} size={11} />
-            <span className="priority-label">{PRIORITY_LABELS[priorityKey]}</span>
-          </span>
+          <div className="card-badges-row">
+            {task.status !== 'done' && urgencyKey !== 'none' && (
+              <span className={`urgency-badge ${urgencyInfo.className}`} title={urgencyInfo.desc}>
+                <span className="urgency-dot" />
+                <span>{urgencyInfo.label}</span>
+              </span>
+            )}
+            <span className={`priority-badge priority-badge-${priorityKey}`} title={`Priority: ${PRIORITY_LABELS[priorityKey]}`}>
+              <IconPriorityBars priority={priorityKey} size={11} />
+              <span className="priority-label">{PRIORITY_LABELS[priorityKey]}</span>
+            </span>
+          </div>
         </div>
+
         <div className="card-top-actions">
           <button
             type="button"
@@ -225,6 +290,28 @@ export default function TaskCard({
 
       {task.description && (
         <p className="task-description">{task.description}</p>
+      )}
+
+      {(dueInfo || task.estimated_hours) && (
+        <div className="card-schedule-info">
+          {dueInfo ? (
+            <span className={`badge-due ${dueInfo.statusClass}`} title={dueInfo.formattedDate}>
+              <IconCalendar size={12} />
+              <span>{dueInfo.relativeText}</span>
+            </span>
+          ) : (
+            <span className="badge-no-due">
+              <IconCalendar size={12} />
+              <span>No deadline</span>
+            </span>
+          )}
+          {task.estimated_hours && (
+            <span className="badge-effort" title="Estimated effort">
+              <IconClock size={12} />
+              <span>{formatEffortHours(task.estimated_hours)}</span>
+            </span>
+          )}
+        </div>
       )}
 
       <div className="card-footer">

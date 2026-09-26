@@ -10,6 +10,7 @@ import {
   IconPriorityBars,
   IconCheck,
   IconX,
+  IconClock,
 } from './Icons';
 import { PersonAvatar, getAvatarStyle } from './PersonPicker';
 
@@ -25,6 +26,8 @@ export default function Sidebar({
   onSelectFilterAssignee,
   filterPriority,
   onSelectFilterPriority,
+  viewMode = 'board',
+  onSelectViewMode,
   onOpenNewTaskModal,
   lastSynced,
   syncError,
@@ -196,8 +199,9 @@ export default function Sidebar({
           <nav className="sidebar-nav">
             <button
               type="button"
-              className={`sidebar-nav-item ${filterAssignee === '' && filterPriority === '' ? 'sidebar-nav-item-active' : ''}`}
+              className={`sidebar-nav-item ${viewMode === 'board' && filterAssignee === '' && filterPriority === '' ? 'sidebar-nav-item-active' : ''}`}
               onClick={() => {
+                if (onSelectViewMode) onSelectViewMode('board');
                 onSelectFilterAssignee('');
                 onSelectFilterPriority('');
               }}
@@ -208,6 +212,23 @@ export default function Sidebar({
                 <>
                   <span className="sidebar-nav-text">All Tasks</span>
                   <span className="sidebar-nav-count">{totalTasks}</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={`sidebar-nav-item ${viewMode === 'schedule' ? 'sidebar-nav-item-active' : ''}`}
+              onClick={() => {
+                if (onSelectViewMode) onSelectViewMode('schedule');
+              }}
+              title="Individual Task Scheduler"
+            >
+              <span className="sidebar-nav-icon"><IconClock size={15} /></span>
+              {!isCollapsed && (
+                <>
+                  <span className="sidebar-nav-text">Task Scheduler</span>
+                  <span className="sidebar-nav-badge">Smart</span>
                 </>
               )}
             </button>

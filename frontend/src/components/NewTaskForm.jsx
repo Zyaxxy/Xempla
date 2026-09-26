@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AssigneeSelect } from './PersonPicker';
 import { IconX } from './Icons';
+import { EFFORT_PRESETS } from '../utils/scheduler';
 
 export default function NewTaskForm({
   people,
@@ -14,6 +15,8 @@ export default function NewTaskForm({
   const [assignee, setAssignee] = useState(defaultAssignee || '');
   const [status, setStatus] = useState(initialStatus);
   const [priority, setPriority] = useState('medium');
+  const [dueDate, setDueDate] = useState('');
+  const [estimatedHours, setEstimatedHours] = useState(1.0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -33,11 +36,15 @@ export default function NewTaskForm({
         description: description.trim(),
         status,
         priority,
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        estimated_hours: parseFloat(estimatedHours) || 1.0,
         assignee: assignee || null,
       });
       setTitle('');
       setDescription('');
       setPriority('medium');
+      setDueDate('');
+      setEstimatedHours(1.0);
       if (onClose) onClose();
     } catch (err) {
       setError(err.message || 'Failed to create task');
@@ -87,7 +94,7 @@ export default function NewTaskForm({
             <input
               type="text"
               className="text-input"
-              placeholder="e.g. Implement schema migration script"
+              placeholder="e.g. Refactor API error boundary middleware"
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -144,6 +151,45 @@ export default function NewTaskForm({
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
               </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ flex: 1.2 }}>
+              <label className="form-label">Deadline (optional)</label>
+              <input
+                type="datetime-local"
+                className="text-input"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Estimated Effort (Hours)</label>
+              <div className="effort-input-row">
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.1"
+                  max="100"
+                  className="text-input text-input-effort"
+                  value={estimatedHours}
+                  onChange={(e) => setEstimatedHours(e.target.value)}
+                />
+                <div className="effort-presets">
+                  {EFFORT_PRESETS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      className={`preset-chip ${parseFloat(estimatedHours) === p.value ? 'preset-chip-active' : ''}`}
+                      onClick={() => setEstimatedHours(p.value)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

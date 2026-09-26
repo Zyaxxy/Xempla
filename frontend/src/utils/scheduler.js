@@ -1,13 +1,13 @@
-// Scheduling and priority calculation helpers
+// Scheduling and priority calculation helpers (No Emojis, Utilitarian Minimalism)
 
 export const URGENCY_CONFIG = {
-  overdue: { label: 'Overdue', emoji: '🚨', className: 'urgency-overdue', desc: 'Past deadline' },
-  critical: { label: 'Do Now', emoji: '🔥', className: 'urgency-critical', desc: 'Tight deadline, start immediately' },
-  high: { label: 'Next Up', emoji: '⚡', className: 'urgency-high', desc: 'Due soon or high effort' },
-  medium: { label: 'Scheduled', emoji: '⏳', className: 'urgency-medium', desc: 'On track' },
-  low: { label: 'Later', emoji: '☕', className: 'urgency-low', desc: 'Plenty of time' },
-  none: { label: 'Backlog', emoji: '📝', className: 'urgency-none', desc: 'No due date set' },
-  done: { label: 'Done', emoji: '✅', className: 'urgency-done', desc: 'Completed' },
+  overdue: { label: 'Overdue', className: 'urgency-overdue', desc: 'Past deadline' },
+  critical: { label: 'Immediate', className: 'urgency-critical', desc: 'Tight deadline, prioritize' },
+  high: { label: 'Next Up', className: 'urgency-high', desc: 'Due soon or high effort' },
+  medium: { label: 'Scheduled', className: 'urgency-medium', desc: 'On track' },
+  low: { label: 'Later', className: 'urgency-low', desc: 'Ample time remaining' },
+  none: { label: 'Backlog', className: 'urgency-none', desc: 'No deadline set' },
+  done: { label: 'Done', className: 'urgency-done', desc: 'Completed' },
 };
 
 export const EFFORT_PRESETS = [
@@ -19,7 +19,7 @@ export const EFFORT_PRESETS = [
 ];
 
 /**
- * Format a due date string into a friendly, contextual label with urgency status.
+ * Format a due date string into a clean, contextual label with urgency status.
  */
 export function formatDueDateInfo(dueIsoString) {
   if (!dueIsoString) return null;
@@ -40,22 +40,22 @@ export function formatDueDateInfo(dueIsoString) {
   if (isOverdue) {
     statusClass = 'due-overdue';
     if (absHours < 1) {
-      relativeText = `Overdue by ${Math.round(absHours * 60)}m`;
+      relativeText = `Overdue ${Math.round(absHours * 60)}m`;
     } else if (absHours < 24) {
-      relativeText = `Overdue by ${Math.round(absHours)}h`;
+      relativeText = `Overdue ${Math.round(absHours)}h`;
     } else {
       const days = Math.round(absHours / 24);
-      relativeText = `Overdue by ${days}d`;
+      relativeText = `Overdue ${days}d`;
     }
   } else if (diffHours < 2) {
     statusClass = 'due-imminent';
     relativeText = `Due in ${Math.max(1, Math.round(diffHours * 60))}m`;
   } else if (diffHours < 24) {
     statusClass = 'due-today';
-    relativeText = `Due today at ${due.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    relativeText = `Due today ${due.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   } else if (diffHours < 48) {
     statusClass = 'due-soon';
-    relativeText = `Tomorrow at ${due.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    relativeText = `Tomorrow ${due.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   } else {
     relativeText = `Due ${due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
   }

@@ -39,19 +39,19 @@ def main():
     port = int(os.environ.get("PORT", "8000"))
 
     print(f"\n=======================================================")
-    print(f"🚀 Shared Task Board running at: http://localhost:{port}")
-    print(f"📖 API Documentation (Swagger):  http://localhost:{port}/docs")
+    print(f"Server running at: http://localhost:{port}")
+    print(f"API Documentation:  http://localhost:{port}/docs")
 
     cloudflared_proc = None
 
     if use_tunnel:
         cf_bin = find_cloudflared()
         if not cf_bin:
-            print("❌ Error: cloudflared binary not found.")
+            print("Error: cloudflared binary not found.")
             print("Run: curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o ~/.local/bin/cloudflared && chmod +x ~/.local/bin/cloudflared")
             sys.exit(1)
 
-        print(f"🌐 Cloudflare Tunnel enabled. Initializing public link...")
+        print(f"Cloudflare Tunnel enabled. Initializing public link...")
         print(f"=======================================================\n")
 
         # Launch cloudflared tunnel
@@ -80,14 +80,14 @@ def main():
                     for part in line.split():
                         if "trycloudflare.com" in part:
                             clean_url = part.strip().rstrip("|,.")
-                            print(f"\n✨ PUBLIC LINK: {clean_url}\n")
+                            print(f"\nPUBLIC LINK: {clean_url}\n")
                 elif "error" in line.lower():
                     print(f"[tunnel] {line.strip()}")
 
         t = threading.Thread(target=stream_tunnel_output, daemon=True)
         t.start()
     else:
-        print(f"💡 Tip: Run with --tunnel to get an instant public link")
+        print(f"Tip: Run with --tunnel to get an instant public link")
         print(f"=======================================================\n")
 
     try:
