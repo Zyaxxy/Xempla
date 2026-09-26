@@ -8,11 +8,10 @@ import {
   IconUser,
   IconCircleDotted,
   IconPriorityBars,
-  IconCheck,
   IconX,
   IconClock,
 } from './Icons';
-import { PersonAvatar, getAvatarStyle } from './PersonPicker';
+import { PersonAvatar } from './PersonPicker';
 
 export default function Sidebar({
   isCollapsed,

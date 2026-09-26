@@ -62,6 +62,11 @@ export default function App() {
     }
   };
 
+  const handleOpenNewTaskModal = useCallback((initialStatus = 'todo') => {
+    setNewTaskInitialStatus(initialStatus);
+    setIsNewTaskModalOpen(true);
+  }, []);
+
   // Global keyboard shortcuts: '[' to toggle sidebar, 'n' to new task
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
@@ -79,7 +84,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [handleOpenNewTaskModal]);
 
   // Fetch both tasks and people
   const fetchData = useCallback(async (isBackground = false) => {
@@ -136,11 +141,6 @@ export default function App() {
   const handleAddPerson = async (name) => {
     await api.addPerson(name);
     await fetchData();
-  };
-
-  const handleOpenNewTaskModal = (initialStatus = 'todo') => {
-    setNewTaskInitialStatus(initialStatus);
-    setIsNewTaskModalOpen(true);
   };
 
   // Filter tasks by search query as well

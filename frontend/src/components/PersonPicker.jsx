@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconUser, IconPlus, IconCheck } from './Icons';
+import { IconUser, IconPlus } from './Icons';
 
 // Palette of muted, sophisticated tones for avatars in dark theme
 const AVATAR_PALETTES = [

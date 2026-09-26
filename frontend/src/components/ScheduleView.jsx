@@ -10,7 +10,6 @@ import {
   IconCheck,
   IconRefresh,
   IconArrowLeft,
-  IconPencil,
   IconTrash,
   IconClock,
   IconCalendar,
