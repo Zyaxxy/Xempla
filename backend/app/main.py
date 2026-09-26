@@ -95,7 +95,7 @@ def add_person(person_in: PersonCreate):
                 detail=f"Person '{person_in.name}' already exists",
             )
         try:
-            return crud.add_person(conn, person_in.name)
+            return crud.add_person(conn, person_in.name, person_in.role or "")
         except sqlite3.IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

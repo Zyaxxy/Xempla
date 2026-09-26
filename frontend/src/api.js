@@ -61,11 +61,11 @@ export const api = {
     return handleResponse(res);
   },
 
-  async addPerson(name) {
+  async addPerson(name, role = '') {
     const res = await fetch(`${API_BASE}/people`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, role }),
     });
     return handleResponse(res);
   },

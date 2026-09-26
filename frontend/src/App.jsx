@@ -3,21 +3,19 @@ import { api } from './api';
 import Board from './components/Board';
 import ScheduleView from './components/ScheduleView';
 import NewTaskForm from './components/NewTaskForm';
+import OnboardingModal from './components/OnboardingModal';
 import Sidebar from './components/Sidebar';
 import {
-  IconSidebar,
-  IconSidebarExpand,
   IconPlus,
   IconSearch,
   IconX,
   IconAlert,
   IconPriorityBars,
-  IconGrid,
-  IconClock,
 } from './components/Icons';
 
 const POLLING_INTERVAL_MS = 3500;
 const USER_STORAGE_KEY = 'shared_taskboard_current_user';
+const USER_ROLE_STORAGE_KEY = 'shared_taskboard_current_user_role';
 const SIDEBAR_STORAGE_KEY = 'xempla_sidebar_collapsed';
 
 export default function App() {
@@ -43,6 +41,16 @@ export default function App() {
     return localStorage.getItem(USER_STORAGE_KEY) || null;
   });
 
+  // First-time onboarding popup
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    // When initial loading finishes and no user is selected, prompt for Name and Role
+    if (!loading && !currentUser) {
+      setShowOnboarding(true);
+    }
+  }, [loading, currentUser]);
+
   const isPollingRef = useRef(false);
 
   const handleToggleSidebar = () => {
@@ -57,9 +65,28 @@ export default function App() {
     setCurrentUser(name);
     if (name) {
       localStorage.setItem(USER_STORAGE_KEY, name);
+      const person = people.find((p) => p.name === name);
+      if (person?.role) {
+        localStorage.setItem(USER_ROLE_STORAGE_KEY, person.role);
+      }
     } else {
       localStorage.removeItem(USER_STORAGE_KEY);
+      localStorage.removeItem(USER_ROLE_STORAGE_KEY);
+      setShowOnboarding(true);
     }
+  };
+
+  const handleOnboardingComplete = async (name, role = '', isNew = false) => {
+    if (isNew) {
+      await api.addPerson(name, role);
+      await fetchData();
+    }
+    setCurrentUser(name);
+    localStorage.setItem(USER_STORAGE_KEY, name);
+    if (role) {
+      localStorage.setItem(USER_ROLE_STORAGE_KEY, role);
+    }
+    setShowOnboarding(false);
   };
 
   const handleOpenNewTaskModal = useCallback((initialStatus = 'todo') => {
@@ -192,21 +219,11 @@ export default function App() {
         {/* Top Navigation Bar */}
         <header className="workspace-header">
           <div className="workspace-header-left">
-            <button
-              type="button"
-              className="topbar-toggle-btn"
-              onClick={handleToggleSidebar}
-              title={isSidebarCollapsed ? 'Expand sidebar ([)' : 'Collapse sidebar ([)'}
-              aria-label="Toggle sidebar"
-            >
-              {isSidebarCollapsed ? <IconSidebarExpand size={16} /> : <IconSidebar size={16} />}
-            </button>
-
             <div className="breadcrumb-nav">
               <span className="breadcrumb-root">Sprint</span>
               <span className="breadcrumb-separator">/</span>
               <span className="breadcrumb-current">
-                {viewMode === 'schedule' ? 'Task Scheduler' : activeViewName}
+                {viewMode === 'my_tasks' ? 'My Tasks (Scheduler)' : activeViewName}
               </span>
               {viewMode === 'board' && filterPriority && (
                 <>
@@ -245,27 +262,6 @@ export default function App() {
           </div>
 
           <div className="workspace-header-right">
-            <div className="view-mode-toggle">
-              <button
-                type="button"
-                className={`view-toggle-btn ${viewMode === 'board' ? 'view-toggle-active' : ''}`}
-                onClick={() => setViewMode('board')}
-                title="Kanban Board View"
-              >
-                <IconGrid size={13} />
-                <span>Board</span>
-              </button>
-              <button
-                type="button"
-                className={`view-toggle-btn ${viewMode === 'schedule' ? 'view-toggle-active' : ''}`}
-                onClick={() => setViewMode('schedule')}
-                title="Priority Task Scheduler"
-              >
-                <IconClock size={13} />
-                <span>Scheduler</span>
-              </button>
-            </div>
-
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -353,7 +349,7 @@ export default function App() {
               <div className="spinner" />
               <p className="loading-text">Loading workspace...</p>
             </div>
-          ) : viewMode === 'schedule' ? (
+          ) : viewMode === 'my_tasks' ? (
             <ScheduleView
               tasks={displayedTasks}
               people={people}
@@ -384,6 +380,14 @@ export default function App() {
           initialStatus={newTaskInitialStatus}
           onCreateTask={handleCreateTask}
           onClose={() => setIsNewTaskModalOpen(false)}
+        />
+      )}
+
+      {/* First-time Onboarding Modal (Asks for Name & Role) */}
+      {showOnboarding && (
+        <OnboardingModal
+          people={people}
+          onComplete={handleOnboardingComplete}
         />
       )}
     </div>

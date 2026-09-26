@@ -11,16 +11,16 @@ def get_current_iso_time() -> str:
 
 def get_all_people(conn: sqlite3.Connection) -> List[Dict[str, str]]:
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM people ORDER BY name COLLATE NOCASE ASC")
+    cursor.execute("SELECT name, role FROM people ORDER BY name COLLATE NOCASE ASC")
     rows = cursor.fetchall()
-    return [{"name": row["name"]} for row in rows]
+    return [{"name": row["name"], "role": row["role"] or ""} for row in rows]
 
 
-def add_person(conn: sqlite3.Connection, name: str) -> Dict[str, str]:
+def add_person(conn: sqlite3.Connection, name: str, role: str = "") -> Dict[str, str]:
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO people (name) VALUES (?)", (name,))
+    cursor.execute("INSERT INTO people (name, role) VALUES (?, ?)", (name, role or ""))
     conn.commit()
-    return {"name": name}
+    return {"name": name, "role": role or ""}
 
 
 def person_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -29,9 +29,9 @@ def person_exists(conn: sqlite3.Connection, name: str) -> bool:
     return cursor.fetchone() is not None
 
 
-def ensure_person_exists(conn: sqlite3.Connection, name: str) -> None:
+def ensure_person_exists(conn: sqlite3.Connection, name: str, role: str = "") -> None:
     cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO people (name) VALUES (?)", (name,))
+    cursor.execute("INSERT OR IGNORE INTO people (name, role) VALUES (?, ?)", (name, role or ""))
     conn.commit()
 
 

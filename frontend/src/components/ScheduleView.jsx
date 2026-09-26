@@ -27,10 +27,10 @@ export default function ScheduleView({
   onDeleteTask,
   onOpenNewTaskModal,
 }) {
-  const [selectedPerson, setSelectedPerson] = useState(currentUser || '');
+  const [selectedPerson, setSelectedPerson] = useState('');
 
-  // Filter tasks for the selected person
-  const activePerson = selectedPerson || currentUser;
+  // Active person is the explicit selection or falls back to currentUser
+  const activePerson = selectedPerson || currentUser || '';
   const personTasks = tasks.filter((t) => {
     if (!activePerson) return true; // show all if nobody chosen
     return t.assignee === activePerson;
@@ -60,7 +60,7 @@ export default function ScheduleView({
         <div className="schedule-header-left">
           <div className="schedule-title-row">
             <IconClock size={20} className="schedule-title-icon" />
-            <h2>Task Scheduler</h2>
+            <h2>{activePerson ? `${activePerson}'s Task Schedule` : 'My Tasks — Task Scheduler'}</h2>
           </div>
           <p className="schedule-subtitle">
             Dynamic prioritization by deadline proximity, required effort, and base importance.

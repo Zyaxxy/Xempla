@@ -19,6 +19,78 @@ export const EFFORT_PRESETS = [
 ];
 
 /**
+ * Converts an ISO-8601 string from backend (UTC) to a local 'YYYY-MM-DDTHH:mm'
+ * string suitable for HTML5 datetime-local inputs without timezone offset shift.
+ */
+export function toLocalDatetimeInput(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+/**
+ * Converts a local 'YYYY-MM-DDTHH:mm' string back to a valid ISO-8601 string.
+ * Gracefully returns null if empty or invalid.
+ */
+export function toIsoDatetimeString(localVal) {
+  if (!localVal || !String(localVal).trim()) return null;
+  const d = new Date(localVal);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+/**
+ * Generate a quick preset local datetime-local string
+ */
+export function getQuickDatePreset(type) {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const format = (date) =>
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+  if (type === '2h') {
+    d.setHours(d.getHours() + 2);
+    d.setMinutes(0);
+    d.setSeconds(0);
+    return format(d);
+  }
+  if (type === 'today_eod') {
+    const nowHours = d.getHours();
+    if (nowHours >= 18) {
+      d.setHours(21, 0, 0, 0);
+    } else {
+      d.setHours(18, 0, 0, 0);
+    }
+    return format(d);
+  }
+  if (type === 'tomorrow') {
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return format(d);
+  }
+  if (type === 'in_2d') {
+    d.setDate(d.getDate() + 2);
+    d.setHours(18, 0, 0, 0);
+    return format(d);
+  }
+  if (type === 'next_week') {
+    const day = d.getDay();
+    const daysUntilMon = ((8 - day) % 7) || 7;
+    d.setDate(d.getDate() + daysUntilMon);
+    d.setHours(9, 0, 0, 0);
+    return format(d);
+  }
+  return '';
+}
+
+/**
  * Format a due date string into a clean, contextual label with urgency status.
  */
 export function formatDueDateInfo(dueIsoString) {

@@ -16,7 +16,10 @@ import {
   formatDueDateInfo,
   formatEffortHours,
   EFFORT_PRESETS,
+  toLocalDatetimeInput,
+  toIsoDatetimeString,
 } from '../utils/scheduler';
+import EasyTimePicker from './EasyTimePicker';
 
 const PRIORITY_LABELS = {
   low: 'Low',
@@ -38,7 +41,7 @@ export default function TaskCard({
   const [editAssignee, setEditAssignee] = useState(task.assignee || '');
   const [editStatus, setEditStatus] = useState(task.status);
   const [editPriority, setEditPriority] = useState(task.priority || 'medium');
-  const [editDueDate, setEditDueDate] = useState(task.due_date ? task.due_date.substring(0, 16) : '');
+  const [editDueDate, setEditDueDate] = useState(() => toLocalDatetimeInput(task.due_date));
   const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimated_hours || 1.0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -69,7 +72,7 @@ export default function TaskCard({
         assignee: editAssignee || null,
         status: editStatus,
         priority: editPriority,
-        due_date: editDueDate ? new Date(editDueDate).toISOString() : null,
+        due_date: toIsoDatetimeString(editDueDate),
         estimated_hours: parseFloat(editEstimatedHours) || 1.0,
       });
       setIsEditing(false);
@@ -179,12 +182,10 @@ export default function TaskCard({
 
           <div className="form-row">
             <div className="form-group" style={{ flex: 1.2 }}>
-              <label className="form-label">Due Date & Time</label>
-              <input
-                type="datetime-local"
-                className="text-input"
+              <EasyTimePicker
                 value={editDueDate}
-                onChange={(e) => setEditDueDate(e.target.value)}
+                onChange={setEditDueDate}
+                label="Due Date & Time"
               />
             </div>
 
@@ -228,7 +229,7 @@ export default function TaskCard({
                 setEditAssignee(task.assignee || '');
                 setEditStatus(task.status);
                 setEditPriority(task.priority || 'medium');
-                setEditDueDate(task.due_date ? task.due_date.substring(0, 16) : '');
+                setEditDueDate(toLocalDatetimeInput(task.due_date));
                 setEditEstimatedHours(task.estimated_hours || 1.0);
                 setIsEditing(false);
                 setError('');

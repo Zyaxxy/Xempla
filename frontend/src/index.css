@@ -1795,6 +1795,78 @@ kbd, .keystroke-badge {
   border: 1px solid var(--border-subtle);
 }
 
+/* ==========================================================================
+   Easy Time Picker
+   ========================================================================== */
+
+.easy-time-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.easy-time-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time-picker-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  transition: all 0.12s;
+}
+
+.time-picker-clear-btn:hover {
+  color: var(--pastel-red-text);
+  background: var(--pastel-red-bg);
+}
+
+.easy-time-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.easy-time-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.easy-time-native-input {
+  padding-left: 32px !important;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color-scheme: dark;
+}
+
+.easy-time-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.easy-time-preview {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid;
+  width: fit-content;
+  margin-top: 3px;
+}
+
 /* Effort Presets & Input Group */
 .effort-input-row {
   display: flex;
@@ -2254,5 +2326,229 @@ kbd, .keystroke-badge {
 .btn-icon-subtle:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   Sidebar User Role
+   ========================================================================== */
+
+.sidebar-user-role-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Onboarding Modal (First-time user name & role setup)
+   ========================================================================== */
+
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 14, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.onboarding-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg, 12px);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.onboarding-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.onboarding-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #232834;
+  color: #93c5fd;
+  border: 1px solid #3b82f6;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.onboarding-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.onboarding-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.onboarding-mode-switch {
+  display: flex;
+  background: #12151b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 4px;
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.mode-btn-active {
+  background: #232834;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.role-chips-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.role-chips-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.role-chip {
+  background: #141820;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.role-chip:hover {
+  background: #232834;
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+.role-chip-active {
+  background: #2a3346;
+  color: #93c5fd;
+  border-color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Existing Member Cards in Onboarding */
+.existing-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.existing-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #141820;
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.existing-member-card:hover {
+  background: #1c222c;
+  border-color: var(--border-focus);
+}
+
+.existing-member-selected {
+  background: #1e2636;
+  border-color: #3b82f6;
+}
+
+.existing-member-card .member-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.existing-member-card .member-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.existing-member-card .member-role {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.existing-member-card .check-icon {
+  color: #3b82f6;
+}
+
+.onboarding-actions {
+  margin-top: 8px;
+}
+
+.btn-onboarding {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 

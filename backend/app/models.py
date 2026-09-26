@@ -119,6 +119,7 @@ class TaskResponse(BaseModel):
 
 class PersonCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
+    role: Optional[str] = Field(default="", max_length=100)
 
     @field_validator("name")
     @classmethod
@@ -128,6 +129,14 @@ class PersonCreate(BaseModel):
             raise ValueError("Name cannot be empty or only whitespace")
         return stripped
 
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            return v.strip()
+        return ""
+
 
 class PersonResponse(BaseModel):
     name: str
+    role: Optional[str] = ""

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AssigneeSelect } from './PersonPicker';
 import { IconX } from './Icons';
-import { EFFORT_PRESETS } from '../utils/scheduler';
+import EasyTimePicker from './EasyTimePicker';
+import { EFFORT_PRESETS, toIsoDatetimeString } from '../utils/scheduler';
 
 export default function NewTaskForm({
   people,
@@ -36,7 +37,7 @@ export default function NewTaskForm({
         description: description.trim(),
         status,
         priority,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        due_date: toIsoDatetimeString(dueDate),
         estimated_hours: parseFloat(estimatedHours) || 1.0,
         assignee: assignee || null,
       });
@@ -156,12 +157,10 @@ export default function NewTaskForm({
 
           <div className="form-row">
             <div className="form-group" style={{ flex: 1.2 }}>
-              <label className="form-label">Deadline (optional)</label>
-              <input
-                type="datetime-local"
-                className="text-input"
+              <EasyTimePicker
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
+                label="Deadline (optional)"
               />
             </div>
 

@@ -37,22 +37,25 @@ def test_initial_empty_state(client):
 
 
 def test_people_management(client):
-    # Add person
-    res = client.post("/api/people", json={"name": "Alice"})
+    # Add person with role
+    res = client.post("/api/people", json={"name": "Alice", "role": "Frontend Lead"})
     assert res.status_code == 201
-    assert res.json() == {"name": "Alice"}
+    assert res.json() == {"name": "Alice", "role": "Frontend Lead"}
 
     # Duplicate person should return 409
     dup_res = client.post("/api/people", json={"name": "Alice"})
     assert dup_res.status_code == 409
 
-    # Add second person
+    # Add second person without role
     client.post("/api/people", json={"name": "Bob"})
 
     # List people (should be sorted alphabetically)
     list_res = client.get("/api/people")
     assert list_res.status_code == 200
-    assert list_res.json() == [{"name": "Alice"}, {"name": "Bob"}]
+    assert list_res.json() == [
+        {"name": "Alice", "role": "Frontend Lead"},
+        {"name": "Bob", "role": ""},
+    ]
 
     # Empty name should fail validation
     invalid_res = client.post("/api/people", json={"name": "   "})

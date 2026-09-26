@@ -9,7 +9,6 @@ import {
   IconCircleDotted,
   IconPriorityBars,
   IconX,
-  IconClock,
 } from './Icons';
 import { PersonAvatar } from './PersonPicker';
 
@@ -33,6 +32,7 @@ export default function Sidebar({
 }) {
   const [isAddingPerson, setIsAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
+  const [newPersonRole, setNewPersonRole] = useState('');
   const [personError, setPersonError] = useState('');
   const [isSubmittingPerson, setIsSubmittingPerson] = useState(false);
 
@@ -48,6 +48,9 @@ export default function Sidebar({
     : 0;
   const unassignedTasksCount = tasks.filter((t) => !t.assignee).length;
 
+  const currentPerson = people.find((p) => p.name === currentUser);
+  const currentRole = currentPerson?.role;
+
   const handleAddPersonSubmit = async (e) => {
     e.preventDefault();
     const trimmed = newPersonName.trim();
@@ -62,9 +65,10 @@ export default function Sidebar({
     try {
       setIsSubmittingPerson(true);
       setPersonError('');
-      await onAddPerson(trimmed);
+      await onAddPerson(trimmed, newPersonRole.trim());
       onSelectCurrentUser(trimmed);
       setNewPersonName('');
+      setNewPersonRole('');
       setIsAddingPerson(false);
     } catch (err) {
       setPersonError(err.message || 'Error adding member');
@@ -158,10 +162,13 @@ export default function Sidebar({
                     <option value="">Guest (Select identity)</option>
                     {people.map((p) => (
                       <option key={p.name} value={p.name}>
-                        {p.name}
+                        {p.name} {p.role ? `(${p.role})` : ''}
                       </option>
                     ))}
                   </select>
+                  {currentUser && currentRole && (
+                    <span className="sidebar-user-role-label">{currentRole}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -171,13 +178,20 @@ export default function Sidebar({
                 <input
                   type="text"
                   className="sidebar-input-text"
-                  placeholder="New member name..."
+                  placeholder="Member name..."
                   value={newPersonName}
                   onChange={(e) => {
                     setNewPersonName(e.target.value);
                     if (personError) setPersonError('');
                   }}
                   autoFocus
+                />
+                <input
+                  type="text"
+                  className="sidebar-input-text"
+                  placeholder="Role (e.g. Designer)..."
+                  value={newPersonRole}
+                  onChange={(e) => setNewPersonRole(e.target.value)}
                 />
                 <button
                   type="submit"
@@ -217,42 +231,30 @@ export default function Sidebar({
 
             <button
               type="button"
-              className={`sidebar-nav-item ${viewMode === 'schedule' ? 'sidebar-nav-item-active' : ''}`}
+              className={`sidebar-nav-item ${viewMode === 'my_tasks' ? 'sidebar-nav-item-active' : ''}`}
               onClick={() => {
-                if (onSelectViewMode) onSelectViewMode('schedule');
+                if (onSelectViewMode) onSelectViewMode('my_tasks');
+                if (currentUser) onSelectFilterAssignee(currentUser);
               }}
-              title="Individual Task Scheduler"
+              title={currentUser ? `My Tasks Scheduler (${myTasksCount})` : 'My Tasks Scheduler'}
             >
-              <span className="sidebar-nav-icon"><IconClock size={15} /></span>
+              <span className="sidebar-nav-icon"><IconUser size={15} /></span>
               {!isCollapsed && (
                 <>
-                  <span className="sidebar-nav-text">Task Scheduler</span>
-                  <span className="sidebar-nav-badge">Smart</span>
+                  <span className="sidebar-nav-text">My Tasks</span>
+                  <span className="sidebar-nav-badge">Scheduler</span>
+                  {currentUser && <span className="sidebar-nav-count">{myTasksCount}</span>}
                 </>
               )}
             </button>
 
-            {currentUser && (
-              <button
-                type="button"
-                className={`sidebar-nav-item ${filterAssignee === currentUser ? 'sidebar-nav-item-active' : ''}`}
-                onClick={() => onSelectFilterAssignee(currentUser)}
-                title={`My Tasks (${myTasksCount})`}
-              >
-                <span className="sidebar-nav-icon"><IconUser size={15} /></span>
-                {!isCollapsed && (
-                  <>
-                    <span className="sidebar-nav-text">My Tasks</span>
-                    <span className="sidebar-nav-count">{myTasksCount}</span>
-                  </>
-                )}
-              </button>
-            )}
-
             <button
               type="button"
-              className={`sidebar-nav-item ${filterAssignee === 'unassigned' ? 'sidebar-nav-item-active' : ''}`}
-              onClick={() => onSelectFilterAssignee('unassigned')}
+              className={`sidebar-nav-item ${viewMode === 'board' && filterAssignee === 'unassigned' ? 'sidebar-nav-item-active' : ''}`}
+              onClick={() => {
+                if (onSelectViewMode) onSelectViewMode('board');
+                onSelectFilterAssignee('unassigned');
+              }}
               title={`Unassigned (${unassignedTasksCount})`}
             >
               <span className="sidebar-nav-icon"><IconCircleDotted size={15} /></span>
@@ -284,8 +286,11 @@ export default function Sidebar({
                   <button
                     key={prio}
                     type="button"
-                    className={`sidebar-nav-item ${isActive ? 'sidebar-nav-item-active' : ''}`}
-                    onClick={() => onSelectFilterPriority(isActive ? '' : prio)}
+                    className={`sidebar-nav-item ${viewMode === 'board' && isActive ? 'sidebar-nav-item-active' : ''}`}
+                    onClick={() => {
+                      if (onSelectViewMode) onSelectViewMode('board');
+                      onSelectFilterPriority(isActive ? '' : prio);
+                    }}
                   >
                     <span className={`priority-indicator-dot priority-${prio}`}>
                       <IconPriorityBars priority={prio} size={12} />
@@ -315,8 +320,11 @@ export default function Sidebar({
                   <button
                     key={person.name}
                     type="button"
-                    className={`sidebar-team-item ${isFiltered ? 'sidebar-team-item-active' : ''}`}
-                    onClick={() => onSelectFilterAssignee(isFiltered ? '' : person.name)}
+                    className={`sidebar-team-item ${viewMode === 'board' && isFiltered ? 'sidebar-team-item-active' : ''}`}
+                    onClick={() => {
+                      if (onSelectViewMode) onSelectViewMode('board');
+                      onSelectFilterAssignee(isFiltered ? '' : person.name);
+                    }}
                     title={`Filter by ${person.name}`}
                   >
                     <div className="sidebar-team-item-left">

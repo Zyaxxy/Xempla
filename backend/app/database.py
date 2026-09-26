@@ -16,9 +16,16 @@ def init_db(db_path: str = DB_PATH):
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS people (
-                name TEXT PRIMARY KEY NOT NULL
+                name TEXT PRIMARY KEY NOT NULL,
+                role TEXT DEFAULT ''
             )
         """)
+
+        # Migration: ensure role column exists in people table
+        try:
+            cursor.execute("ALTER TABLE people ADD COLUMN role TEXT DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
