@@ -94,6 +94,23 @@ python3 run.py
 - **Web App**: [http://localhost:8000](http://localhost:8000)
 - **Interactive API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
+### 4. Share Publicly with Cloudflare Tunnels (Zero Setup)
+
+To let anyone on the internet access your board, run with the `--tunnel` flag:
+
+```bash
+source .venv/bin/activate
+python3 run.py --tunnel
+```
+
+Or run the tunnel standalone:
+```bash
+./tunnel.sh
+```
+
+A public link (`https://<random-subdomain>.trycloudflare.com`) will be printed in the terminal. Share that link with your team — they can open it on their browser or phone and start collaborating immediately without creating an account.
+
+
 ---
 
 ## Development Mode
