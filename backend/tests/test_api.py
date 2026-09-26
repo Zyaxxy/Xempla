@@ -178,3 +178,90 @@ def test_spa_serving(client):
     assert "Shared Task Board" in res.text or "<!doctype html>" in res.text.lower()
 
 
+def test_create_task_default_priority(client):
+    r = client.post("/api/tasks", json={"title": "No priority set"})
+    assert r.status_code == 201
+    assert r.json()["priority"] == "medium"
+
+
+def test_create_task_with_priority(client):
+    r = client.post("/api/tasks", json={"title": "Urgent fix", "priority": "urgent"})
+    assert r.status_code == 201
+    assert r.json()["priority"] == "urgent"
+
+
+def test_update_task_priority(client):
+    tid = client.post("/api/tasks", json={"title": "P"}).json()["id"]
+    r = client.patch(f"/api/tasks/{tid}", json={"priority": "high"})
+    assert r.status_code == 200
+    assert r.json()["priority"] == "high"
+
+
+def test_invalid_priority_rejected(client):
+    r = client.post("/api/tasks", json={"title": "X", "priority": "critical"})
+    assert r.status_code == 422
+
+
+def test_tasks_sorted_by_priority(client):
+    client.post("/api/tasks", json={"title": "Low Task", "priority": "low"})
+    client.post("/api/tasks", json={"title": "Urgent Task", "priority": "urgent"})
+    client.post("/api/tasks", json={"title": "High Task", "priority": "high"})
+    client.post("/api/tasks", json={"title": "Medium Task", "priority": "medium"})
+    r = client.get("/api/tasks")
+    assert r.status_code == 200
+    titles = [t["title"] for t in r.json()]
+    assert titles == ["Urgent Task", "High Task", "Medium Task", "Low Task"]
+
+
+def test_task_with_due_date_and_effort(client):
+    r = client.post(
+        "/api/tasks",
+        json={
+            "title": "Quarterly Report",
+            "due_date": "2026-10-01T17:00:00Z",
+            "estimated_hours": 3.5,
+            "priority": "high",
+        },
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["due_date"] == "2026-10-01T17:00:00Z"
+    assert data["estimated_hours"] == 3.5
+    assert data["calculated_priority_score"] is not None
+    assert data["urgency_level"] is not None
+
+
+def test_overdue_task_ranked_highest(client):
+    # Past due task
+    client.post(
+        "/api/tasks",
+        json={
+            "title": "Late Task",
+            "due_date": "2020-01-01T12:00:00Z",
+            "estimated_hours": 1.0,
+            "priority": "low",
+        },
+    )
+    # Future task with high priority
+    client.post(
+        "/api/tasks",
+        json={
+            "title": "Future Urgent",
+            "due_date": "2099-01-01T12:00:00Z",
+            "estimated_hours": 2.0,
+            "priority": "urgent",
+        },
+    )
+    r = client.get("/api/tasks")
+    assert r.status_code == 200
+    tasks = r.json()
+    assert tasks[0]["title"] == "Late Task"
+    assert tasks[0]["urgency_level"] == "overdue"
+
+
+def test_invalid_estimated_hours_rejected(client):
+    r = client.post("/api/tasks", json={"title": "Test", "estimated_hours": -2.0})
+    assert r.status_code == 422
+
+
+

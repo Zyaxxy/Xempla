@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AssigneeSelect } from './PersonPicker';
+import { IconX } from './Icons';
 
 export default function NewTaskForm({
   people,
@@ -12,6 +13,7 @@ export default function NewTaskForm({
   const [description, setDescription] = useState('');
   const [assignee, setAssignee] = useState(defaultAssignee || '');
   const [status, setStatus] = useState(initialStatus);
+  const [priority, setPriority] = useState('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,11 +32,12 @@ export default function NewTaskForm({
         title: trimmedTitle,
         description: description.trim(),
         status,
+        priority,
         assignee: assignee || null,
       });
-      // Reset form
       setTitle('');
       setDescription('');
+      setPriority('medium');
       if (onClose) onClose();
     } catch (err) {
       setError(err.message || 'Failed to create task');
@@ -44,9 +47,11 @@ export default function NewTaskForm({
   };
 
   const handleKeyDown = (e) => {
-    // Submit on Cmd+Enter or Ctrl+Enter
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       handleSubmit(e);
+    }
+    if (e.key === 'Escape' && onClose) {
+      onClose();
     }
   };
 
@@ -58,15 +63,18 @@ export default function NewTaskForm({
         onKeyDown={handleKeyDown}
       >
         <div className="modal-header">
-          <h3>Create New Task</h3>
+          <div className="modal-title-wrap">
+            <h3 className="modal-heading">Create Task</h3>
+            <span className="modal-sub">Add an item to the sprint board</span>
+          </div>
           {onClose && (
             <button
               type="button"
               className="icon-btn close-modal-btn"
               onClick={onClose}
-              aria-label="Close form"
+              aria-label="Close dialog"
             >
-              ✕
+              <IconX size={15} />
             </button>
           )}
         </div>
@@ -79,7 +87,7 @@ export default function NewTaskForm({
             <input
               type="text"
               className="text-input"
-              placeholder="What needs to be done?"
+              placeholder="e.g. Implement schema migration script"
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -95,7 +103,7 @@ export default function NewTaskForm({
             <textarea
               className="textarea-input"
               rows={3}
-              placeholder="Add details, links, or context..."
+              placeholder="Provide technical specifications, context, or acceptance criteria..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -112,7 +120,7 @@ export default function NewTaskForm({
             </div>
 
             <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Status</label>
+              <label className="form-label">Column</label>
               <select
                 className="select-input"
                 value={status}
@@ -123,12 +131,31 @@ export default function NewTaskForm({
                 <option value="done">Done</option>
               </select>
             </div>
+
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Priority</label>
+              <select
+                className="select-input"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
           </div>
 
           {error && <div className="error-banner">{error}</div>}
 
           <div className="modal-footer">
-            <span className="submit-hint">Tip: Press ⌘ + Enter to submit</span>
+            <div className="submit-hint">
+              <span>Submit with </span>
+              <kbd className="keystroke-badge">⌘</kbd>
+              <span> + </span>
+              <kbd className="keystroke-badge">Enter</kbd>
+            </div>
             <div className="modal-actions">
               {onClose && (
                 <button

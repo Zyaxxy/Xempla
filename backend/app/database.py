@@ -26,11 +26,32 @@ def init_db(db_path: str = DB_PATH):
                 title TEXT NOT NULL,
                 description TEXT DEFAULT '',
                 status TEXT NOT NULL DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'done')),
+                priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'urgent')),
+                due_date TEXT,
+                estimated_hours REAL DEFAULT 1.0,
                 assignee TEXT REFERENCES people(name) ON DELETE SET NULL,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
         """)
+
+        # Migration: ensure priority column exists if table was already created
+        try:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: ensure due_date and estimated_hours exist
+        try:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN estimated_hours REAL DEFAULT 1.0")
+        except sqlite3.OperationalError:
+            pass
+
         conn.commit()
 
 

@@ -2,10 +2,20 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './api';
 import Board from './components/Board';
 import NewTaskForm from './components/NewTaskForm';
-import PersonPicker from './components/PersonPicker';
+import Sidebar from './components/Sidebar';
+import {
+  IconSidebar,
+  IconSidebarExpand,
+  IconPlus,
+  IconSearch,
+  IconX,
+  IconAlert,
+  IconPriorityBars,
+} from './components/Icons';
 
 const POLLING_INTERVAL_MS = 3500;
 const USER_STORAGE_KEY = 'shared_taskboard_current_user';
+const SIDEBAR_STORAGE_KEY = 'xempla_sidebar_collapsed';
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +26,13 @@ export default function App() {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [newTaskInitialStatus, setNewTaskInitialStatus] = useState('todo');
   const [filterAssignee, setFilterAssignee] = useState('');
+  const [filterPriority, setFilterPriority] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Sidebar collapsed state with localStorage persistence
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
+  });
 
   // Identity: who is currently using this browser window
   const [currentUser, setCurrentUser] = useState(() => {
@@ -23,6 +40,14 @@ export default function App() {
   });
 
   const isPollingRef = useRef(false);
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      return next;
+    });
+  };
 
   const handleSelectCurrentUser = (name) => {
     setCurrentUser(name);
@@ -32,6 +57,25 @@ export default function App() {
       localStorage.removeItem(USER_STORAGE_KEY);
     }
   };
+
+  // Global keyboard shortcuts: '[' to toggle sidebar, 'n' to new task
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
+
+      if (e.key === '[' && !isInput) {
+        e.preventDefault();
+        handleToggleSidebar();
+      } else if ((e.key === 'n' || e.key === 'N') && !isInput && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        handleOpenNewTaskModal('todo');
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // Fetch both tasks and people
   const fetchData = useCallback(async (isBackground = false) => {
@@ -60,7 +104,7 @@ export default function App() {
     fetchData();
   }, [fetchData]);
 
-  // Polling loop (every 3.5s per PRD 5.4: 3-5 seconds)
+  // Polling loop (every 3.5s)
   useEffect(() => {
     const timer = setInterval(() => {
       fetchData(true);
@@ -95,135 +139,204 @@ export default function App() {
     setIsNewTaskModalOpen(true);
   };
 
+  // Filter tasks by search query as well
+  const displayedTasks = tasks.filter((t) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const matchTitle = t.title && t.title.toLowerCase().includes(q);
+    const matchDesc = t.description && t.description.toLowerCase().includes(q);
+    const matchAssignee = t.assignee && t.assignee.toLowerCase().includes(q);
+    return matchTitle || matchDesc || matchAssignee;
+  });
+
+  // Compute active view title for breadcrumb
+  let activeViewName = 'All Tasks';
+  if (filterAssignee === 'unassigned') {
+    activeViewName = 'Unassigned';
+  } else if (filterAssignee === currentUser && currentUser) {
+    activeViewName = 'My Tasks';
+  } else if (filterAssignee) {
+    activeViewName = `Assignee: ${filterAssignee}`;
+  }
+
+  const hasActiveFilters = Boolean(filterAssignee || filterPriority || searchQuery);
+
   return (
-    <div className="app-container">
-      {/* Top Navbar */}
-      <header className="app-header">
-        <div className="header-left">
-          <div className="logo-group">
-            <span className="app-logo-icon">📌</span>
-            <div>
-              <h1 className="app-title">Shared Task Board</h1>
-              <span className="app-subtitle">Real-time collaborative board for your team</span>
-            </div>
-          </div>
-        </div>
+    <div className="workspace-layout">
+      {/* Collapsible Sidebar */}
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+        tasks={tasks}
+        people={people}
+        currentUser={currentUser}
+        onSelectCurrentUser={handleSelectCurrentUser}
+        onAddPerson={handleAddPerson}
+        filterAssignee={filterAssignee}
+        onSelectFilterAssignee={setFilterAssignee}
+        filterPriority={filterPriority}
+        onSelectFilterPriority={setFilterPriority}
+        onOpenNewTaskModal={handleOpenNewTaskModal}
+        lastSynced={lastSynced}
+        syncError={syncError}
+      />
 
-        <div className="header-center">
-          <div className="sync-status-indicator" title={lastSynced ? `Last synced: ${lastSynced.toLocaleTimeString()}` : ''}>
-            <span className={`sync-dot ${syncError ? 'sync-dot-error' : 'sync-dot-live'}`} />
-            <span className="sync-label">
-              {syncError ? 'Sync issue' : 'Live Sync'}
-            </span>
-            {lastSynced && !syncError && (
-              <span className="sync-time">
-                {lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="header-right">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => handleOpenNewTaskModal('todo')}
-          >
-            + New Task
-          </button>
-        </div>
-      </header>
-
-      {/* Sync Error Notice */}
-      {syncError && (
-        <div className="connection-error-bar">
-          ⚠️ Connection lost: {syncError}. Retrying in background...
-        </div>
-      )}
-
-      {/* User / Member Picker Bar */}
-      <section className="identity-bar">
-        <PersonPicker
-          people={people}
-          currentUser={currentUser}
-          onSelectCurrentUser={handleSelectCurrentUser}
-          onAddPerson={handleAddPerson}
-        />
-      </section>
-
-      {/* Filter and stats sub-bar */}
-      <section className="filter-toolbar">
-        <div className="filter-group">
-          <span className="filter-label">Filter tasks:</span>
-          <button
-            type="button"
-            className={`filter-btn ${filterAssignee === '' ? 'filter-btn-active' : ''}`}
-            onClick={() => setFilterAssignee('')}
-          >
-            All ({tasks.length})
-          </button>
-          {currentUser && (
+      {/* Main Viewport */}
+      <div className="workspace-main">
+        {/* Top Navigation Bar */}
+        <header className="workspace-header">
+          <div className="workspace-header-left">
             <button
               type="button"
-              className={`filter-btn ${filterAssignee === currentUser ? 'filter-btn-active' : ''}`}
-              onClick={() => setFilterAssignee(currentUser)}
+              className="topbar-toggle-btn"
+              onClick={handleToggleSidebar}
+              title={isSidebarCollapsed ? 'Expand sidebar ([)' : 'Collapse sidebar ([)'}
+              aria-label="Toggle sidebar"
             >
-              My Tasks ({tasks.filter((t) => t.assignee === currentUser).length})
+              {isSidebarCollapsed ? <IconSidebarExpand size={16} /> : <IconSidebar size={16} />}
             </button>
-          )}
-          <button
-            type="button"
-            className={`filter-btn ${filterAssignee === 'unassigned' ? 'filter-btn-active' : ''}`}
-            onClick={() => setFilterAssignee('unassigned')}
-          >
-            Unassigned ({tasks.filter((t) => !t.assignee).length})
-          </button>
 
-          {people.length > 0 && (
-            <select
-              className="filter-select"
-              value={['', 'unassigned', currentUser].includes(filterAssignee) ? '' : filterAssignee}
-              onChange={(e) => setFilterAssignee(e.target.value)}
-            >
-              <option value="">Specific Person...</option>
-              {people.map((p) => (
-                <option key={p.name} value={p.name}>
-                  {p.name} ({tasks.filter((t) => t.assignee === p.name).length})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {filterAssignee && (
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setFilterAssignee('')}
-          >
-            Clear Filter ✕
-          </button>
-        )}
-      </section>
-
-      {/* Main Board Content */}
-      <main className="board-main">
-        {loading && tasks.length === 0 ? (
-          <div className="board-loading">
-            <div className="spinner" />
-            <p>Loading shared board...</p>
+            <div className="breadcrumb-nav">
+              <span className="breadcrumb-root">Sprint</span>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">{activeViewName}</span>
+              {filterPriority && (
+                <>
+                  <span className="breadcrumb-separator">/</span>
+                  <span className="breadcrumb-tag">
+                    <IconPriorityBars priority={filterPriority} size={11} />
+                    <span>{filterPriority.toUpperCase()}</span>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        ) : (
-          <Board
-            tasks={tasks}
-            people={people}
-            filterAssignee={filterAssignee}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onOpenNewTaskModal={handleOpenNewTaskModal}
-          />
+
+          <div className="workspace-header-center">
+            {/* Quick search input */}
+            <div className="search-input-wrap">
+              <IconSearch size={14} className="search-icon" />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search tasks, descriptions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <IconX size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="workspace-header-right">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => handleOpenNewTaskModal('todo')}
+            >
+              <IconPlus size={14} />
+              <span>New Task</span>
+              <kbd className="keystroke-badge">N</kbd>
+            </button>
+          </div>
+        </header>
+
+        {/* Sync Error Notice with clean SVG alert */}
+        {syncError && (
+          <div className="connection-error-bar">
+            <IconAlert size={15} />
+            <span>Connection disconnected: {syncError}. Retrying in background...</span>
+          </div>
         )}
-      </main>
+
+        {/* Filter Indicator Sub-bar (if filters are active) */}
+        {hasActiveFilters && (
+          <section className="active-filters-bar">
+            <span className="filters-label">Active Filters:</span>
+            <div className="filter-chips-list">
+              {filterAssignee && (
+                <span className="filter-chip">
+                  <span>Assignee: {filterAssignee}</span>
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() => setFilterAssignee('')}
+                    aria-label="Remove assignee filter"
+                  >
+                    <IconX size={11} />
+                  </button>
+                </span>
+              )}
+              {filterPriority && (
+                <span className="filter-chip">
+                  <IconPriorityBars priority={filterPriority} size={11} />
+                  <span>Priority: {filterPriority}</span>
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() => setFilterPriority('')}
+                    aria-label="Remove priority filter"
+                  >
+                    <IconX size={11} />
+                  </button>
+                </span>
+              )}
+              {searchQuery && (
+                <span className="filter-chip">
+                  <span>Search: &ldquo;{searchQuery}&rdquo;</span>
+                  <button
+                    type="button"
+                    className="filter-chip-remove"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Remove search query"
+                  >
+                    <IconX size={11} />
+                  </button>
+                </span>
+              )}
+              <button
+                type="button"
+                className="clear-all-filters-btn"
+                onClick={() => {
+                  setFilterAssignee('');
+                  setFilterPriority('');
+                  setSearchQuery('');
+                }}
+              >
+                Clear all
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* Board Main Area */}
+        <main className="board-main">
+          {loading && tasks.length === 0 ? (
+            <div className="board-loading">
+              <div className="spinner" />
+              <p className="loading-text">Loading shared board...</p>
+            </div>
+          ) : (
+            <Board
+              tasks={displayedTasks}
+              people={people}
+              filterAssignee={filterAssignee}
+              filterPriority={filterPriority}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+              onOpenNewTaskModal={handleOpenNewTaskModal}
+            />
+          )}
+        </main>
+      </div>
 
       {/* Create Task Modal */}
       {isNewTaskModalOpen && (

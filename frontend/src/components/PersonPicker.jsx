@@ -1,38 +1,51 @@
 import React, { useState } from 'react';
+import { IconUser, IconPlus, IconCheck } from './Icons';
 
-// Generates a consistent pleasant color for person avatars
-export function getAvatarColor(name) {
-  if (!name) return '#6b7280';
-  const colors = [
-    '#3b82f6', // blue
-    '#10b981', // emerald
-    '#8b5cf6', // purple
-    '#f59e0b', // amber
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#f97316', // orange
-    '#14b8a6', // teal
-    '#6366f1', // indigo
-  ];
+// Palette of muted, sophisticated tones for avatars in dark theme
+const AVATAR_PALETTES = [
+  { bg: 'rgba(96, 165, 250, 0.15)', text: '#93C5FD', border: 'rgba(96, 165, 250, 0.3)' },
+  { bg: 'rgba(52, 211, 153, 0.15)', text: '#86EFAC', border: 'rgba(52, 211, 153, 0.3)' },
+  { bg: 'rgba(167, 139, 250, 0.15)', text: '#C4B5FD', border: 'rgba(167, 139, 250, 0.3)' },
+  { bg: 'rgba(251, 191, 36, 0.15)', text: '#FDE68A', border: 'rgba(251, 191, 36, 0.3)' },
+  { bg: 'rgba(244, 114, 182, 0.15)', text: '#FBCFE8', border: 'rgba(244, 114, 182, 0.3)' },
+  { bg: 'rgba(56, 189, 248, 0.15)', text: '#BAE6FD', border: 'rgba(56, 189, 248, 0.3)' },
+  { bg: 'rgba(251, 146, 60, 0.15)', text: '#FED7AA', border: 'rgba(251, 146, 60, 0.3)' },
+  { bg: 'rgba(45, 212, 191, 0.15)', text: '#99F6E4', border: 'rgba(45, 212, 191, 0.3)' },
+];
+
+export function getAvatarStyle(name) {
+  if (!name) {
+    return {
+      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+      color: '#9CA3AF',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+    };
+  }
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
+  const index = Math.abs(hash) % AVATAR_PALETTES.length;
+  const p = AVATAR_PALETTES[index];
+  return {
+    backgroundColor: p.bg,
+    color: p.text,
+    borderColor: p.border,
+  };
 }
 
 export function PersonAvatar({ name, size = 'sm' }) {
   if (!name) return null;
   const initial = name.trim().charAt(0).toUpperCase();
-  const bg = getAvatarColor(name);
+  const style = getAvatarStyle(name);
   const sizeClass = size === 'lg' ? 'avatar-lg' : size === 'md' ? 'avatar-md' : 'avatar-sm';
 
   return (
     <div
       className={`person-avatar ${sizeClass}`}
-      style={{ backgroundColor: bg }}
+      style={style}
       title={name}
+      aria-label={`Avatar for ${name}`}
     >
       {initial}
     </div>
@@ -96,15 +109,21 @@ export default function PersonPicker({
   return (
     <div className="person-picker-container">
       <div className="current-user-box">
-        <span className="user-label">You are:</span>
         <div className="user-dropdown-wrapper">
-          {currentUser && <PersonAvatar name={currentUser} size="sm" />}
+          {currentUser ? (
+            <PersonAvatar name={currentUser} size="sm" />
+          ) : (
+            <div className="avatar-placeholder">
+              <IconUser size={14} />
+            </div>
+          )}
           <select
             className="user-select"
             value={currentUser || ''}
             onChange={(e) => onSelectCurrentUser(e.target.value || null)}
+            aria-label="Select active user identity"
           >
-            <option value="">Guest (Select your name)</option>
+            <option value="">Guest (Select name)</option>
             {people.map((p) => (
               <option key={p.name} value={p.name}>
                 {p.name}
@@ -120,8 +139,14 @@ export default function PersonPicker({
             setIsAdding(!isAdding);
             setError('');
           }}
+          title={isAdding ? 'Cancel' : 'Add new team member'}
         >
-          {isAdding ? 'Cancel' : '+ Add Name'}
+          {isAdding ? 'Cancel' : (
+            <>
+              <IconPlus size={13} />
+              <span>Add Member</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -130,7 +155,7 @@ export default function PersonPicker({
           <input
             type="text"
             className="text-input text-input-sm"
-            placeholder="Enter your name..."
+            placeholder="Member name..."
             value={newName}
             onChange={(e) => {
               setNewName(e.target.value);
@@ -139,31 +164,10 @@ export default function PersonPicker({
             autoFocus
           />
           <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
-            {loading ? 'Adding...' : 'Join Board'}
+            {loading ? 'Adding...' : 'Join'}
           </button>
           {error && <span className="error-text-inline">{error}</span>}
         </form>
-      )}
-
-      {people.length > 0 && (
-        <div className="members-roster">
-          <span className="roster-label">Group ({people.length}):</span>
-          <div className="roster-chips">
-            {people.map((p) => (
-              <button
-                key={p.name}
-                type="button"
-                className={`roster-chip ${currentUser === p.name ? 'roster-chip-active' : ''}`}
-                onClick={() => onSelectCurrentUser(p.name)}
-                title={`Switch to ${p.name}`}
-              >
-                <PersonAvatar name={p.name} size="sm" />
-                <span>{p.name}</span>
-                {currentUser === p.name && <span className="you-indicator">(You)</span>}
-              </button>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   );

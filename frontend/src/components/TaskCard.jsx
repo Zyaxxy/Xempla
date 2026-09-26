@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { PersonAvatar, AssigneeSelect } from './PersonPicker';
+import {
+  IconPencil,
+  IconTrash,
+  IconArrowRight,
+  IconArrowLeft,
+  IconCheck,
+  IconRefresh,
+  IconPriorityBars,
+} from './Icons';
 
-const STATUS_CONFIG = {
-  todo: { label: 'To Do', className: 'status-todo' },
-  in_progress: { label: 'In Progress', className: 'status-in-progress' },
-  done: { label: 'Done', className: 'status-done' },
+const PRIORITY_LABELS = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
 };
 
 export default function TaskCard({
@@ -19,6 +29,7 @@ export default function TaskCard({
   const [editDesc, setEditDesc] = useState(task.description || '');
   const [editAssignee, setEditAssignee] = useState(task.assignee || '');
   const [editStatus, setEditStatus] = useState(task.status);
+  const [editPriority, setEditPriority] = useState(task.priority || 'medium');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,6 +58,7 @@ export default function TaskCard({
         description: editDesc.trim(),
         assignee: editAssignee || null,
         status: editStatus,
+        priority: editPriority,
       });
       setIsEditing(false);
     } catch (err) {
@@ -57,7 +69,7 @@ export default function TaskCard({
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete "${task.title}"?`)) {
+    if (window.confirm(`Delete task "${task.title}"?`)) {
       try {
         setIsDeleting(true);
         await onDeleteTask(task.id);
@@ -83,12 +95,14 @@ export default function TaskCard({
     }
   };
 
+  const priorityKey = task.priority || 'medium';
+
   if (isEditing) {
     return (
       <div className="task-card task-card-editing">
         <form onSubmit={handleSaveEdit}>
           <div className="form-group">
-            <label className="form-label">Title *</label>
+            <label className="form-label">Title</label>
             <input
               type="text"
               className="text-input"
@@ -106,7 +120,7 @@ export default function TaskCard({
               rows={3}
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
-              placeholder="Task details..."
+              placeholder="Task details and context..."
             />
           </div>
 
@@ -132,6 +146,20 @@ export default function TaskCard({
                 <option value="done">Done</option>
               </select>
             </div>
+
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Priority</label>
+              <select
+                className="select-input"
+                value={editPriority}
+                onChange={(e) => setEditPriority(e.target.value)}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
           </div>
 
           {error && <div className="error-banner">{error}</div>}
@@ -145,6 +173,7 @@ export default function TaskCard({
                 setEditDesc(task.description || '');
                 setEditAssignee(task.assignee || '');
                 setEditStatus(task.status);
+                setEditPriority(task.priority || 'medium');
                 setIsEditing(false);
                 setError('');
               }}
@@ -164,7 +193,13 @@ export default function TaskCard({
   return (
     <div className={`task-card task-card-${task.status}`}>
       <div className="card-header">
-        <h4 className="task-title" title={task.title}>{task.title}</h4>
+        <div className="card-title-group">
+          <h4 className="task-title" title={task.title}>{task.title}</h4>
+          <span className={`priority-badge priority-badge-${priorityKey}`}>
+            <IconPriorityBars priority={priorityKey} size={11} />
+            <span className="priority-label">{PRIORITY_LABELS[priorityKey]}</span>
+          </span>
+        </div>
         <div className="card-top-actions">
           <button
             type="button"
@@ -173,7 +208,7 @@ export default function TaskCard({
             title="Edit task"
             aria-label="Edit task"
           >
-            ✏️
+            <IconPencil size={13} />
           </button>
           <button
             type="button"
@@ -183,7 +218,7 @@ export default function TaskCard({
             aria-label="Delete task"
             disabled={isDeleting}
           >
-            🗑️
+            <IconTrash size={13} />
           </button>
         </div>
       </div>
@@ -212,41 +247,45 @@ export default function TaskCard({
             {task.status === 'todo' && (
               <button
                 type="button"
-                className="btn-pill btn-pill-progress"
+                className="btn-action btn-action-progress"
                 onClick={() => handleQuickStatusChange('in_progress')}
                 title="Move to In Progress"
               >
-                Start →
+                <span>Start</span>
+                <IconArrowRight size={12} />
               </button>
             )}
             {task.status === 'in_progress' && (
               <>
                 <button
                   type="button"
-                  className="btn-pill btn-pill-todo"
+                  className="btn-action btn-action-todo"
                   onClick={() => handleQuickStatusChange('todo')}
                   title="Move back to To Do"
                 >
-                  ← To Do
+                  <IconArrowLeft size={12} />
+                  <span>To Do</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-pill btn-pill-done"
+                  className="btn-action btn-action-done"
                   onClick={() => handleQuickStatusChange('done')}
                   title="Mark as Done"
                 >
-                  Done ✓
+                  <span>Done</span>
+                  <IconCheck size={12} />
                 </button>
               </>
             )}
             {task.status === 'done' && (
               <button
                 type="button"
-                className="btn-pill btn-pill-reopen"
+                className="btn-action btn-action-reopen"
                 onClick={() => handleQuickStatusChange('in_progress')}
                 title="Reopen task"
               >
-                ↺ Reopen
+                <IconRefresh size={12} />
+                <span>Reopen</span>
               </button>
             )}
           </div>
